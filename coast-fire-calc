@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coast FIRE Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d14;
+    --surface: #111520;
+    --surface2: #161c2d;
+    --border: #1e2740;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: rgba(201,168,76,0.15);
+    --text: #e8e4d9;
+    --text-muted: #7a8099;
+    --accent: #4a90d9;
+    --green: #3ecf8e;
+    --red: #f06c6c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Atmospheric background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 900px;
+    height: 500px;
+    background: radial-gradient(ellipse, rgba(201,168,76,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+    display: block;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(38px, 6vw, 62px);
+    font-weight: 300;
+    line-height: 1.08;
+    letter-spacing: -0.5px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.1s ease forwards;
+  }
+
+  .title span {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .subtitle {
+    margin-top: 16px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.2s ease forwards;
+  }
+
+  /* Gold divider */
+  .divider {
+    width: 48px;
+    height: 1px;
+    background: var(--gold);
+    margin: 28px auto;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.25s ease forwards;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 44px;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.3s ease forwards;
+  }
+
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Input grid */
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media(max-width: 580px) {
+    .input-grid { grid-template-columns: 1fr; }
+    .card { padding: 28px 22px; }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .prefix {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold);
+    font-size: 14px;
+    pointer-events: none;
+    font-weight: 400;
+  }
+
+  .suffix {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 12px;
+    pointer-events: none;
+  }
+
+  input[type="number"], input[type="range"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 13px 14px 13px 32px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  input[type="number"].no-prefix { padding-left: 14px; }
+  input[type="number"].has-suffix { padding-right: 42px; }
+
+  input[type="number"]:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+  }
+
+  /* Range slider */
+  .range-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .range-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .range-val {
+    font-size: 15px;
+    color: var(--gold-light);
+    font-weight: 500;
+    min-width: 40px;
+    text-align: right;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    padding: 0;
+    height: 4px;
+    border: none;
+    border-radius: 2px;
+    background: var(--border);
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--bg);
+    cursor: pointer;
+    transition: transform 0.15s;
+    box-shadow: 0 0 0 0 rgba(201,168,76,0.3);
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 6px rgba(201,168,76,0.2);
+  }
+
+  /* CTA button */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 17px;
+    margin-top: 32px;
+    background: var(--gold);
+    border: none;
+    border-radius: 10px;
+    color: #0a0d14;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.2);
+  }
+
+  .btn:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 30px rgba(201,168,76,0.3);
+  }
+
+  .btn:active { transform: translateY(0); }
+
+  /* Results */
+  .results {
+    display: none;
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .results.visible { display: block; }
+
+  /* Hero result */
+  .result-hero {
+    background: linear-gradient(135deg, var(--surface) 0%, #141a2e 100%);
+    border: 1px solid var(--gold);
+    border-radius: 16px;
+    padding: 44px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .result-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(201,168,76,0.08), transparent 70%);
+    pointer-events: none;
+  }
+
+  .result-already {
+    font-size: 13px;
+    color: var(--green);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .result-age-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .result-age {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 96px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--gold-light);
+  }
+
+  .result-age-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 10px;
+  }
+
+  .result-age-sub strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media(max-width: 580px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stat:last-child { grid-column: 1 / -1; }
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .stat-value.gold { color: var(--gold-light); }
+  .stat-value.green { color: var(--green); }
+
+  /* Timeline bar */
+  .timeline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 36px;
+    margin-bottom: 20px;
+  }
+
+  .timeline-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .timeline-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .timeline-bar-wrap {
+    position: relative;
+    height: 12px;
+    background: var(--surface2);
+    border-radius: 6px;
+    margin: 8px 0 30px;
+    border: 1px solid var(--border);
+  }
+
+  .timeline-segment {
+    position: absolute;
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .seg-contribute {
+    background: linear-gradient(90deg, var(--accent), #6ab4f7);
+    left: 0;
+  }
+
+  .seg-coast {
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  }
+
+  .timeline-markers {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .tm-item { text-align: center; }
+  .tm-age { font-size: 14px; color: var(--text); font-weight: 500; }
+  .tm-tag { margin-top: 2px; }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 2px;
+  }
+
+  /* Disclaimer */
+  .disclaimer {
+    margin-top: 40px;
+    padding: 20px 24px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    opacity: 0;
+    animation: fadeUp 0.6s 0.5s ease forwards;
+  }
+
+  .disclaimer p {
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }
+
+  .disclaimer strong {
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 10px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Already coasted banner */
+  .coasted-badge {
+    display: inline-block;
+    background: rgba(62,207,142,0.1);
+    border: 1px solid rgba(62,207,142,0.3);
+    color: var(--green);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  .error-msg {
+    color: var(--red);
+    font-size: 12px;
+    margin-top: 8px;
+    text-align: center;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header class="header">
+    <span class="eyebrow">Financial Independence Calculator</span>
+    <h1 class="title">Coast <span>FIRE</span></h1>
+    <div class="divider"></div>
+    <p class="subtitle">
+      Discover the age at which your portfolio, left untouched, will grow to fund your retirement entirely on its own — so you never have to save another dollar.
+    </p>
+  </header>
+
+  <div class="card">
+    <div class="card-label">Your Numbers</div>
+    <div class="input-grid">
+
+      <div class="field">
+        <label>Current Age</label>
+        <div class="input-wrap">
+          <input type="number" id="currentAge" class="no-prefix" value="32" min="18" max="80" placeholder="32">
+          <span class="suffix">yrs</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Retirement Age</label>
+        <div class="input-wrap">
+          <input type="number" id="retirementAge" class="no-prefix" value="60" min="40" max="90" placeholder="60">
+          <span class="suffix">yrs</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Current Portfolio</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="number" id="currentSavings" value="85000" min="0" placeholder="85000">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Monthly Contribution</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="number" id="monthlyContrib" value="1500" min="0" placeholder="1500">
+        </div>
+      </div>
+
+      <div class="field full">
+        <label>Annual Retirement Expenses</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="number" id="annualExpenses" value="80000" min="10000" placeholder="80000">
+        </div>
+      </div>
+
+      <div class="field range-field">
+        <div class="range-header">
+          <label>Expected Annual Return</label>
+          <span class="range-val" id="returnVal">7.0%</span>
+        </div>
+        <input type="range" id="annualReturn" min="3" max="12" step="0.5" value="7">
+      </div>
+
+      <div class="field range-field">
+        <div class="range-header">
+          <label>Safe Withdrawal Rate</label>
+          <span class="range-val" id="swrVal">4.0%</span>
+        </div>
+        <input type="range" id="swr" min="2.5" max="5" step="0.25" value="4">
+      </div>
+
+    </div>
+
+    <p class="error-msg" id="errorMsg">Please check your inputs — ensure retirement age is greater than current age.</p>
+    <button class="btn" onclick="calculate()">Calculate My Coast FIRE Age</button>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <div class="result-hero" id="resultHero">
+      <div class="result-age-label" id="heroLabel">Coast FIRE Age</div>
+      <div class="result-age" id="heroAge">—</div>
+      <div class="result-age-sub" id="heroSub"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-label">FIRE Number</div>
+        <div class="stat-value gold" id="statFire">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Coast Number Today</div>
+        <div class="stat-value" id="statCoast">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Portfolio at Retirement</div>
+        <div class="stat-value green" id="statPortfolio">—</div>
+      </div>
+    </div>
+
+    <div class="timeline-card">
+      <div class="timeline-label">Your Timeline</div>
+      <div class="timeline-bar-wrap">
+        <div class="timeline-segment seg-contribute" id="segContribute" style="width:0%"></div>
+        <div class="timeline-segment seg-coast" id="segCoast" style="width:0%"></div>
+      </div>
+      <div class="timeline-markers" id="timelineMarkers"></div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#4a90d9"></div>
+          Contributing phase
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--gold)"></div>
+          Coasting phase — no contributions needed
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+
+  <div class="disclaimer">
+    <p><strong>⚠ Disclaimer</strong> &nbsp;—&nbsp; This calculator is provided for <strong>informational and educational purposes only</strong> and does not constitute financial, tax, or investment advice. All projections are based on assumed rates of return and do not account for inflation, taxes, market volatility, sequence-of-returns risk, or changes in personal circumstances. Past investment performance is not indicative of future results. <strong>Please consult a licensed financial advisor or planner</strong> before making any financial decisions. The creator of this tool accepts no liability for any actions taken based on the results displayed.</p>
+  </div>
+
+</div>
+
+<script>
+  const returnSlider = document.getElementById('annualReturn');
+  const swrSlider = document.getElementById('swr');
+  const returnVal = document.getElementById('returnVal');
+  const swrVal = document.getElementById('swrVal');
+
+  returnSlider.addEventListener('input', () => {
+    returnVal.textContent = parseFloat(returnSlider.value).toFixed(1) + '%';
+  });
+
+  swrSlider.addEventListener('input', () => {
+    swrVal.textContent = parseFloat(swrSlider.value).toFixed(2).replace(/\.?0+$/, '') + '%';
+  });
+
+  function fmt(n) {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + Math.round(n / 1e3).toLocaleString() + 'K';
+    return '$' + Math.round(n).toLocaleString();
+  }
+
+  function calculate() {
+    const currentAge = parseFloat(document.getElementById('currentAge').value);
+    const retirementAge = parseFloat(document.getElementById('retirementAge').value);
+    const currentSavings = parseFloat(document.getElementById('currentSavings').value);
+    const monthlyContrib = parseFloat(document.getElementById('monthlyContrib').value);
+    const annualExpenses = parseFloat(document.getElementById('annualExpenses').value);
+    const r = parseFloat(returnSlider.value) / 100;
+    const swr = parseFloat(swrSlider.value) / 100;
+
+    const errorEl = document.getElementById('errorMsg');
+
+    if (isNaN(currentAge) || isNaN(retirementAge) || isNaN(currentSavings) || retirementAge <= currentAge) {
+      errorEl.style.display = 'block';
+      return;
+    }
+    errorEl.style.display = 'none';
+
+    const annualContrib = monthlyContrib * 12;
+    const fireNumber = annualExpenses / swr;
+
+    // Find coast age: smallest age X where savings(X) >= fireNumber / (1+r)^(retirementAge - X)
+    let coastAge = null;
+    let portfolioAtCoast = 0;
+
+    // Iterate year by year
+    let portfolio = currentSavings;
+    const rMonthly = r / 12;
+
+    for (let age = currentAge; age <= retirementAge; age += 1) {
+      const yearsToRetirement = retirementAge - age;
+      const coastNumberAtAge = fireNumber / Math.pow(1 + r, yearsToRetirement);
+
+      if (portfolio >= coastNumberAtAge) {
+        coastAge = Math.round(age * 10) / 10;
+        portfolioAtCoast = portfolio;
+        break;
+      }
+
+      // Add one year of monthly-compounding contributions
+      if (age < retirementAge) {
+        const yearlyGrowth = portfolio * ((Math.pow(1 + rMonthly, 12) - 1) + 1) - portfolio;
+        const contribGrowth = monthlyContrib * ((Math.pow(1 + rMonthly, 12) - 1) / rMonthly);
+        portfolio = portfolio + yearlyGrowth + contribGrowth;
+      }
+    }
+
+    // If never reaches coast, project max
+    const alreadyCoasted = (coastAge === currentAge || 
+      (currentSavings >= fireNumber / Math.pow(1 + r, retirementAge - currentAge)));
+
+    if (!coastAge && coastAge !== 0) {
+      // Won't coast even by retirement — show retirement portfolio
+      portfolio = currentSavings;
+      for (let age = currentAge; age < retirementAge; age++) {
+        portfolio = portfolio * Math.pow(1 + rMonthly, 12) + 
+                    monthlyContrib * ((Math.pow(1 + rMonthly, 12) - 1) / rMonthly);
+      }
+      // Still show result with note
+      coastAge = retirementAge;
+      portfolioAtCoast = portfolio;
+    }
+
+    // Portfolio at retirement if they stop at coast age
+    const yearsCoasting = retirementAge - coastAge;
+    const portfolioAtRetirement = portfolioAtCoast * Math.pow(1 + r, yearsCoasting);
+
+    // Render
+    const results = document.getElementById('results');
+    results.classList.add('visible');
+
+    const heroAge = document.getElementById('heroAge');
+    const heroLabel = document.getElementById('heroLabel');
+    const heroSub = document.getElementById('heroSub');
+
+    if (coastAge >= retirementAge) {
+      heroLabel.textContent = '⚠ Projected Shortfall';
+      heroAge.textContent = fmt(portfolioAtRetirement);
+      heroAge.style.fontSize = '48px';
+      heroSub.innerHTML = `At current pace you may not fully coast by retirement. Consider increasing contributions or adjusting your retirement target.`;
+    } else if (alreadyCoasted && coastAge === currentAge) {
+      heroLabel.innerHTML = '<span class="coasted-badge">🎉 You\'ve Already Coasted!</span>';
+      heroAge.textContent = currentAge;
+      heroSub.innerHTML = `Your portfolio today is sufficient to grow to your FIRE number by age <strong>${retirementAge}</strong> — without another dollar of investment.`;
+    } else {
+      heroLabel.textContent = 'Stop Contributing at Age';
+      heroAge.textContent = Math.ceil(coastAge);
+      heroAge.style.fontSize = '96px';
+      const yearsLeft = Math.ceil(coastAge) - currentAge;
+      heroSub.innerHTML = `In <strong>${yearsLeft} year${yearsLeft !== 1 ? 's' : ''}</strong>, you can stop investing and let compound growth carry you to financial independence at <strong>${retirementAge}</strong>.`;
+    }
+
+    document.getElementById('statFire').textContent = fmt(fireNumber);
+    document.getElementById('statCoast').textContent = fmt(fireNumber / Math.pow(1 + r, retirementAge - currentAge));
+    document.getElementById('statPortfolio').textContent = fmt(portfolioAtRetirement);
+
+    // Timeline bar
+    const totalSpan = retirementAge - currentAge;
+    const contributeSpan = Math.min(Math.ceil(coastAge) - currentAge, totalSpan);
+    const contributeWidth = Math.max(0, (contributeSpan / totalSpan) * 100);
+    const coastWidth = 100 - contributeWidth;
+
+    setTimeout(() => {
+      document.getElementById('segContribute').style.width = contributeWidth + '%';
+      document.getElementById('segCoast').style.left = contributeWidth + '%';
+      document.getElementById('segCoast').style.width = coastWidth + '%';
+    }, 100);
+
+    const markers = document.getElementById('timelineMarkers');
+    markers.innerHTML = `
+      <div class="tm-item"><div class="tm-age">${currentAge}</div><div class="tm-tag">Today</div></div>
+      <div class="tm-item"><div class="tm-age">${Math.ceil(coastAge)}</div><div class="tm-tag">Coast Age</div></div>
+      <div class="tm-item"><div class="tm-age">${retirementAge}</div><div class="tm-tag">Retirement</div></div>
+    `;
+
+    results.style.animation = 'none';
+    results.style.opacity = '0';
+    results.style.animation = 'fadeUp 0.5s ease forwards';
+  }
+</script>
+</body>
+</html>
